@@ -1,0 +1,46 @@
+packer directory structure:
+./packer
+├── build.boxes
+├── http
+│   ├── ISO -> /ISO
+│   └── kickstart -> ../kickstart
+├── ISO -> /ISO
+├── kickstart
+│   ├── ks-rhel-graph-virtualbox.cfg
+│   ├── ks-rhel-graph-vmware.cfg
+│   ├── ks-rhel-text-virtualbox.cfg
+│   └── ks-rhel-text-vmware.cfg
+├── README
+├── scripts
+│   ├── addbox.sh
+│   └── packer_virtualbox.sh
+├── templates
+│   └── rhel.rhce.pkr.hcl
+└── vars
+    ├── rhel84graph.pkvars.hcl
+    └── rhel84text.pkvars.hcl
+
+build.boxes - bash script to build base base boxes
+http        - packer http directory
+ISO         - a symlink to your RHEL ISO files repository
+kickstart   - pxe kickstart answer files directory
+scripts     - scripts directory for packer local shell
+templates   - packer templates directory
+vars        - packer variable files directory
+
+HTTP directory contains following symlinks:
+kickstart -> ../kickstart
+ISO       -> ../ISO
+
+build.boxes script:
+Will perform removal of packer_cache packer_out box_out directories if exists before and after box build process
+After the build, a box image will be added to vagrant prefixed by <provider>.rhel with <provider>: virtualbox-iso vmware-iso
+
+Default usernames and passwords:
+root    - password
+vagrant - vagrant
+ansible - password
+
+Issues:
+When packer build the VM for vmware-iso provider will allocate as nmcli con-name ens33. When the box image is created and being used by vagrant, the interface ens33 previous created in packer will be identified in vagrant as ens32 as default nat interface and you may ends up with issues with virtual network configurations on vmware. (check ../vagrant/README)
+

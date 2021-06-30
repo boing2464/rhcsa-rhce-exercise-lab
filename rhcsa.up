@@ -1,0 +1,8 @@
+#!/bin/bash
+
+source ./env.rhce
+
+### Define your vagrant provider: vmware_desktop virtualbox
+provider="vmware_desktop"
+
+vagrant up --provider ${provider} utility.example.com rhel84-std-1 rhel84-std-2

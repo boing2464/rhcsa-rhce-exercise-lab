@@ -1,0 +1,73 @@
+#!/bin/bash
+
+source ./env.rhce
+
+home_dir=`pwd`
+
+function show_usage {
+echo -e "
+bash build <option>
+
+Options:
+all      - build packer image -> vagrant box
+cleanvms - destroy all vagrant lab vm's
+cleanbox - remove all vagrant lab boxes
+cleanall - destroy all vagrant lab vm's and boxes and remove packer temp dirs
+"
+exit
+}
+
+function build {
+### Invoke packer to build vagrant boxes
+### Default provider: vmware-iso
+###
+### Note: check build.boxes scripts to change provider
+cd packer 
+bash build.boxes
+}
+
+function clean_vms {
+expected_servers="utility.example.com acontroller.example.com ansible1.example.com ansible2.example.com rhel84-std-1 rhel84-std2"
+
+for server in ${expected_servers}; do 
+	vagrant destroy -f `echo ${server}`
+done
+}
+
+function clean_boxes {
+expected_boxes_names="rhel-8.4-graph-virtualbox rhel-8.4-graph-vmware rhel-8.4-text-virtualbox rhel-8.4-text-vmware"
+
+for box in ${expected_boxes_names}; do
+	vagrant box remove `echo ${box}`
+done
+}
+
+function clean_all {
+    packer_outdirs="box_out packer_cache packer_out"
+
+    clean_vms
+    clean_boxes
+    for outdir in ${packer_outdirs}; do
+       if [ -d $homedir/packer/${outdir} ]; then
+	   rm -fr $homedir/packer/${outdir}
+       fi
+    done
+}
+
+case $1 in
+    all)
+	    build
+	    ;;
+    cleanboxes)
+	    clean_boxes
+	    ;;
+    cleanvms)
+	    clean_vms
+	    ;;
+    cleanall)
+	    clean_all
+	    ;;
+    *)
+	    show_usage
+	    ;;
+esac
