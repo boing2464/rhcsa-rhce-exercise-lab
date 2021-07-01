@@ -1,0 +1,84 @@
+# -*- mode: ruby -*-
+
+Vagrant.require_version ">= 2.2.16"
+
+require 'yaml'
+
+servers = YAML.load_file(ENV["VAGRANT_SERVER_YAML"])
+
+API_VERSION = "2"
+
+Vagrant.configure(API_VERSION) do |config|
+  config.ssh.username='vagrant'
+  if ARGV[0] == "ssh" or ARGV[0] == "upload"
+    if ENV['vagrant_user'].to_s.length >0
+      config.ssh.username="#{ENV['vagrant_user']}"
+    end
+  end
+  config.registration.skip=true
+  
+  servers.each do |server|
+    if server["provider"]=="vmware_desktop"
+      config.vm.provider "vmware_desktop" do |vmware|
+        vmware.gui=true
+        vmware.allowlist_verified=true
+      end
+    end    
+    if server["provider"]=="virtualbox"
+      config.vm.provider "virtualbox" do |vb|
+        config.vbguest.auto_update=false   
+        vb.gui=true
+        vb.check_guest_additions=false
+        vb.default_nic_type="82540em"
+      end    
+    end
+    config.vm.ignore_box_vagrantfile="true"
+    config.vm.define server["name"] do |machine|
+      machine.vm.box=server["box"]
+      machine.vm.hostname=server["name"]
+      if server["disks"] != nil
+        for disk in Array(server["disks"])
+          machine.vm.disk :disk,name: disk["name"],size: disk["size"]*1024*1024
+        end
+      end
+      if server["dvds"] != nil
+        for dvd in Array(server["dvds"])
+          machine.vm.disk :dvd,name: dvd["name"],file: dvd["file"]
+        end
+      end
+      if server["networks"] != nil
+        slotNumber=34
+        for network in Array(server["networks"])
+          ethernetCounter=1
+          if network["type"] == "dhcp"
+            machine.vm.network network["interface"], type: network["type"]
+          else
+            if network["hostname"] != nil then
+              machine.vm.network network["interface"], ip: network["ip"], hostname: network["hostname"]
+            else
+              if network["gateway"] != nil then
+                machine.vm.network network["interface"], ip: network["ip"], gateway: network["gateway"]
+              else
+                machine.vm.network network["interface"], ip: network["ip"]
+              end
+            end
+          end 
+        end
+      end
+
+      for portfwd in Array(server["portforwards"])
+        machine.vm.network "forwarded_port", guest: portfwd["guestport"], host: portfwd["hostport"]
+      end
+      machine.vm.provider :virtualbox do |vb|
+        vb.memory=server["memory"]
+        vb.cpus=server["cpus"]
+      end
+   
+      ### configure Disks - Experimental feature
+      ### export VAGRANT_EXPERIMENTAL="disks"
+      ### for virtualbox-iso and vmware-iso
+    end    
+  end
+  config.vm.provision "shell",path: "vagrant/scripts/rhce/setupUtility.sh"
+end
+

@@ -1,0 +1,63 @@
+vagrant directory structure:
+./vagrant
+├── config
+│   └── rhce-lab-config.yml
+├── README
+├── scripts
+│   └── rhce
+│       └── setupUtility.sh
+└── templates
+    └── Vagrant-rhce-lab
+
+config   - directory contains the yaml file with lab servers hw specification
+scripts  - contains scripts to prepare the lab servers
+template - vagrant file for lab environment
+
+VMWare network addressing:
+nat               - 192.168.13.0/24
+private network 1 - 192.168.14.0/24
+private network N - 192.168.1[N+14].0/24
+
+Virtualbox network addressing:
+nat               - 10.0.2.0/24
+private network 1 - 192.168.14.0/24
+private network N - 192.168.1[N+14].0/24
+
+Lab VM's description:
+-- Utility VM:
+utility.example.com (192.168.14.100) [DNS, repositories, time, NFS, ansible]
+
+-- for RHCE set (use rhce.up script to startup the lab servers) :
+utility.example.com     - supply services
+acontroller.example.com - ansible controller
+ansible1.example.com    - ansible managed server
+ansible2.example.com    - ansible managed server
+
+-- RHCSA: (use rhcsa.up script to startup the lab servers)
+utility.example.com     - supply services
+rhel84-std-1            - RHEL server 1
+rhel84-std-2            - RHEL server 2
+
+Note: all vm's were built by default packer lab templates with SELINUX in Enforcing mode
+
+User accounts:
+root    - password
+vagrant - vagrant
+ansible - password
+
+Switching user account in vagrant ssh:
+You can switch the user account for vagrant ssh using environment variable vagrant_user instead of using default vagrant account for the lab environments.
+
+Examples:
+export vagrant_user=root ; vagrant ssh ansible1.example.com
+export vagrant_user=ansible; vagrant ssh ansible2.example.com
+
+Issues:
+- each time networking if set off and on, the resolv nameservers may include your nat interface dns. You have to ensure that the vm's do not include the nat interface dns for the lab to work. (or adjust your virtualbox/vmware dhcpd options). You can also check the script setupUtility.sh, function del_DNS to prepare a script or ansible task for reseting resolv.
+
+Final notes:
+The intent of This repository is to try aid you to build rapidaly a lab environment for your certification study only (after you have mastered the OS installation/setup).
+
+You still have to seek the proper certification materials and workout for the certification objectives, such as: official courses, learning providers, self paced training stuffs, books and videos to earn your certification.
+
+

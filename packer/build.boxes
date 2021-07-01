@@ -1,0 +1,29 @@
+#!/bin/bash
+
+function cleanup {
+if [ -d packer_out ]; then
+    rm -fr packout_out
+fi
+
+if [ -d packer_cache ]; then
+    rm -fr packer_cache
+fi
+
+if [ -d box_out ]; then
+    rm -fr box_out
+fi
+}
+
+providers="vmware-iso.rhel"
+images="rhel84graph.pkvars.hcl rhel84text.pkvars.hcl"
+#images="rhel84text.pkvars.hcl"
+
+cleanup
+
+for provider in ${providers}; do
+    for image in ${images}; do
+        packer build -force -on-error=ask -only=${providers} -var-file=vars/${image} templates/rhel.rhce.pkr.hcl
+    done
+done 
+
+cleanup
